@@ -42,9 +42,9 @@ impl Blockchain {
             Block::new("0".repeat(64), vec!["genesis".to_string()], self.difficulty);
 
         self.chain.push(genesis_block.clone());
-        println!("genesis block created");
-        println!("genesis block hash: {}", bytes_to_hex_string(&genesis_block.hash));
-        println!("transactions: {:?}", genesis_block.transactions);
+        println!("Genesis block initialized.");
+        println!("Hash: {}", bytes_to_hex_string(&genesis_block.hash));
+        println!("Transactions: {:?}", genesis_block.transactions);
         println!("Nonce: {}", genesis_block.header.nonce);
     }
 
@@ -53,7 +53,9 @@ impl Blockchain {
     }
 
     pub fn add_block(&mut self, transactions: Vec<String>) -> Result<(), &'static str> {
-        let last_block = self.get_last_block().ok_or("区块链为空")?;
+        let last_block = self
+            .get_last_block()
+            .ok_or("Blockchain is empty. Cannot add block.")?;
 
         let new_block = Block::new(
             bytes_to_hex_string(last_block.hash.as_slice()),

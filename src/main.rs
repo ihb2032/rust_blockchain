@@ -7,10 +7,10 @@ use utils::hash::bytes_to_hex_string;
 
 fn main() {
     let mut rng = rand::rng();
-    let blockchain_manager = match BlockchainManager::new("blockchain_db") {
+    let mut blockchain_manager = match BlockchainManager::new("blockchain_db") {
         Ok(blockchain_manager) => blockchain_manager,
         Err(err) => {
-            println!("Error: {}", err);
+            println!("Failed to initialize blockchain manager: {}", err);
             return;
         }
     };
@@ -21,11 +21,13 @@ fn main() {
         io::stdin().read_line(&mut input).unwrap();
         match input.trim().parse() {
             Ok(0) => {
-                println!("exit!");
+                blockchain_manager.blockchain = blockchain;
+                let _ = blockchain_manager.save();
+                println!("Exiting application. Blockchain saved.");
                 break;
             }
             Ok(1) => {
-                println!("add block");
+                println!("Generating new block with random transactions...");
                 let mut transactions: Vec<String> = Vec::new();
                 let die = Uniform::new_inclusive(1, 100);
                 let num = die.unwrap().sample(&mut rng);
@@ -33,20 +35,25 @@ fn main() {
                     transactions.push(format!("transaction {}", i));
                 }
                 let _ = blockchain.add_block(transactions);
-                println!("Block added");
+                println!("New block successfully mined and added to the chain.");
             }
             Ok(2) => {
-                println!("show all blocks");
                 let blockchain_iter = blockchain.iter();
                 blockchain_iter.for_each(|block| {
-                    println!("timestamp: {}", block.header.timestamp);
+                    println!("[Block Details]");
+                    println!("Timestamp: {}", block.header.timestamp);
                     println!(
-                        "previous hash: {}",
+                        "Previous Hash: {}",
                         bytes_to_hex_string(&block.header.prev_hash)
                     );
-                    println!("current hash: {}", bytes_to_hex_string(&block.hash));
+                    println!("Current Hash: {}", bytes_to_hex_string(&block.hash));
                     println!("Nonce: {}", block.header.nonce);
-                    println!("transactions: {:?}", block.transactions);
+                    println!("Transaction Count: {}", block.transactions.len());
+                    println!("Transactions:");
+                    for (i, tx) in block.transactions.iter().enumerate() {
+                        println!(" {}. {}", i + 1, tx);
+                    }
+                    println!("-----------------------------");
                 });
             }
             _ => {}
@@ -54,9 +61,9 @@ fn main() {
     }
 }
 fn show() {
-    println!("Simple Block Chain");
-    println!("1. Add block");
-    println!("2. Show all blocks");
-    println!("0. Exit");
-    print!(">> ");
+    println!("Blockchain CLI - Main Menu");
+    println!("1. Generate new block");
+    println!("2. Display blockchain");
+    println!("0. Exit and save");
+    println!("Enter your choice: ");
 }

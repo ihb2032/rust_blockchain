@@ -4,46 +4,46 @@ use sled::{Db, Error, open};
 
 pub struct BlockchainManager {
     db: Db,
-    blockchain: Blockchain,
+    pub blockchain: Blockchain,
 }
 
 /// Manages blockchain operations including persistence and retrieval
-/// 
+///
 /// The `BlockchainManager` struct provides functionality to:
 /// - Load a blockchain from disk
 /// - Save blockchain state to disk
 /// - Access the current blockchain state
-    /// Creates a new `BlockchainManager` instance
-    /// 
-    /// # Arguments
-    /// 
-    /// * `db_path` - A string slice that holds the path to the database file
-    /// 
-    /// # Returns
-    /// 
-    /// * `Result<Self, Error>` - A new BlockchainManager instance if successful, or an Error if creation fails
-    /// 
-    /// # Note
-    /// 
-    /// If no existing blockchain is found in the database or if deserialization fails,
-    /// a new blockchain with difficulty level 4 will be created.
-    
-    /// Returns a clone of the current blockchain
-    /// 
-    /// # Returns
-    /// 
-    /// * `Blockchain` - A copy of the current blockchain state
-    
-    /// Saves the current blockchain state to disk
-    /// 
-    /// # Returns
-    /// 
-    /// * `Result<(), Error>` - Ok(()) if save is successful, Error otherwise
-    /// 
-    /// # Note
-    /// 
-    /// This method serializes the blockchain and performs a database flush operation
-    /// to ensure data persistence
+/// Creates a new `BlockchainManager` instance
+///
+/// # Arguments
+///
+/// * `db_path` - A string slice that holds the path to the database file
+///
+/// # Returns
+///
+/// * `Result<Self, Error>` - A new BlockchainManager instance if successful, or an Error if creation fails
+///
+/// # Note
+///
+/// If no existing blockchain is found in the database or if deserialization fails,
+/// a new blockchain with difficulty level 4 will be created.
+
+/// Returns a clone of the current blockchain
+///
+/// # Returns
+///
+/// * `Blockchain` - A copy of the current blockchain state
+
+/// Saves the current blockchain state to disk
+///
+/// # Returns
+///
+/// * `Result<(), Error>` - Ok(()) if save is successful, Error otherwise
+///
+/// # Note
+///
+/// This method serializes the blockchain and performs a database flush operation
+/// to ensure data persistence
 impl BlockchainManager {
     pub fn new(db_path: &str) -> Result<Self, Error> {
         let db = open(db_path)?;
@@ -55,7 +55,7 @@ impl BlockchainManager {
             None => Blockchain::new(4),
         };
         println!(
-            "Loaded blockchain from disk, current block numbers: {}",
+            "Blockchain loaded from storage. Current block height: {}",
             blockchain.chain.len()
         );
         Ok(Self { db, blockchain })
@@ -73,18 +73,10 @@ impl BlockchainManager {
         self.db.insert("blockchain", serialized)?;
         let _ = self.db.flush();
         println!(
-            "Saved blockchain to disk, current block numbers: {}",
+            "Blockchain saved successfully. Total blocks: {}",
             self.blockchain.chain.len()
         );
         Ok(())
-    }
-}
-
-impl Drop for BlockchainManager {
-    fn drop(&mut self) {
-        if let Err(e) = self.save() {
-            eprintln!("Saving to blockchain: {}", e);
-        }
     }
 }
 
@@ -97,7 +89,7 @@ mod tests {
     fn test_blockchain_manager_new() {
         let temp_dir = tempdir().unwrap();
         let db_path = temp_dir.path().to_str().unwrap();
-        
+
         let manager = BlockchainManager::new(db_path).unwrap();
         assert_eq!(manager.get_blockchain().chain.len(), 1); // Genesis block
     }
@@ -106,14 +98,14 @@ mod tests {
     fn test_blockchain_manager_save_and_load() {
         let temp_dir = tempdir().unwrap();
         let db_path = temp_dir.path().to_str().unwrap();
-        
+
         // Create and save blockchain
         let mut manager1 = BlockchainManager::new(db_path).unwrap();
         let mut chain = manager1.get_blockchain();
         let _ = chain.add_block(vec!["Test data".to_string()]);
         manager1.blockchain = chain;
         manager1.save().unwrap();
-        
+
         // Load and verify
         let manager2 = BlockchainManager::new(db_path).unwrap();
         assert_eq!(manager2.get_blockchain().chain.len(), 2);
@@ -129,14 +121,14 @@ mod tests {
     fn test_blockchain_manager_drop() {
         let temp_dir = tempdir().unwrap();
         let db_path = temp_dir.path().to_str().unwrap();
-        
+
         {
             let mut manager = BlockchainManager::new(db_path).unwrap();
             let mut chain = manager.get_blockchain();
             let _ = chain.add_block(vec!["Drop test".to_string()]);
             manager.blockchain = chain;
         } // manager gets dropped here
-        
+
         let new_manager = BlockchainManager::new(db_path).unwrap();
         assert_eq!(new_manager.get_blockchain().chain.len(), 2);
     }

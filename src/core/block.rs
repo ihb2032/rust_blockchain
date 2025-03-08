@@ -75,7 +75,7 @@ impl Block {
             self.header.nonce += 1;
         }
 
-        println!("Block mined: {}", bytes_to_hex_string(&self.hash));
+        println!("Block mined successfully. Hash: {}", bytes_to_hex_string(&self.hash));
     }
 }
 
@@ -124,6 +124,6 @@ mod tests {
             block
                 .hash
                 .starts_with(&vec![0u8; (difficulty / 8) as usize])
-        ); // Check prefix
+        ); 
     }
 }
